@@ -359,6 +359,43 @@ class ApiErrorHTTPTests(ApiTest):
     def tearDown(self):
         super(ApiErrorHTTPTests, self).tearDown()
 
+    def test_baselines_wrong_uuid(self):
+        uuids = [
+            ("ed877dfc-14e9-4ccf-ba3d-68d9ff34645", ["GET", "POST", "PATCH", "DELETE"], [400, 400, 400, 400]),
+            ("ed877dfc-14e9-4ccf-ba3d-68d9ff3464571", ["GET", "POST", "PATCH", "DELETE"], [400, 400, 400, 400]),
+            ("-ed877dfc-14e9-4ccf-ba3d-68d9ff34645", ["GET", "POST", "PATCH", "DELETE"], [400, 400, 400, 400]),
+            ("{ed877dfc-14e9-4ccf-ba3d-68d9ff346455", ["GET", "POST", "PATCH", "DELETE"], [400, 400, 400, 400]),
+            ("{ed877dfc-14e9-4ccf-ba3d-68d9ff346455", ["GET", "POST", "PATCH", "DELETE"], [400, 400, 400, 400]),
+            ("ed877dfc-14e9-4ccf-ba3d-68d9ff346457-", ["GET", "POST", "PATCH", "DELETE"], [400, 400, 400, 400]),
+            (" ed877dfc-14e9-4ccf-ba3d-68d9ff34645", ["GET", "POST", "PATCH", "DELETE"], [400, 400, 400, 400]),
+            ("!ed877dfc-14e9-4ccf-ba3d-68d9ff34645", ["GET", "POST", "PATCH", "DELETE"], [400, 400, 400, 400]),
+            ("@ed877dfc-14e9-4ccf-ba3d-68d9ff34645", ["GET", "POST", "PATCH", "DELETE"], [400, 400, 400, 400]),
+            (">ed877dfc-14e9-4ccf-ba3d-68d9ff34645", ["GET", "POST", "PATCH", "DELETE"], [400, 400, 400, 400]),
+            ("<ed877dfc-14e9-4ccf-ba3d-68d9ff34645", ["GET", "POST", "PATCH", "DELETE"], [400, 400, 400, 400]),
+            ("(ed877dfc-14e9-4ccf-ba3d-68d9ff34645", ["GET", "POST", "PATCH", "DELETE"], [400, 400, 400, 400]),
+            (r"!@#`~$-%^&*-*()--+=[]-{}\/<>?|645764", ["GET", "POST", "PATCH", "DELETE"], [400, 400, 400, 400]),
+            (r"!@#`~$-%^&*-*()--+=[]-{}\/<>?|6457635", ["GET", "POST", "PATCH", "DELETE"], [400, 400, 400, 400]),
+            (r"!@#`~$-%^&*-*()--+=[]-{}\/<>?|64573", ["GET", "POST", "PATCH", "DELETE"], [400, 400, 400, 400]),
+        ]
+
+        for uuid in uuids:
+            endpoint = "/baselines/" + uuid[0]
+            http_methods = uuid[1]
+            expected_status_codes = uuid[2]
+
+            for http_method in http_methods:
+                expected_status_code = expected_status_codes.pop(0)
+                with self.subTest(
+                    endpoint=endpoint, method=http_method, expected_status_code=expected_status_code
+                ):
+                    with self.client() as client:
+                        response = client.request(
+                            http_method,
+                            f"api/system-baseline/v1{endpoint}",
+                            headers=fixtures.AUTH_HEADER,
+                        )
+                        self.assertEqual(response.status_code, expected_status_code)
+
     def test_baselines_wrong_url(self):
         api_endpoints = [
             ("/baseline", ["GET", "POST", "PATCH"], [404, 404, 404]),
